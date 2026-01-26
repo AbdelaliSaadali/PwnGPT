@@ -1,0 +1,122 @@
+/* Global Styles */
+body {
+    background-color: #0e1117;
+    color: #00ff41;
+    /* Cyber Green */
+    font-family: 'Courier New', Courier, monospace;
+}
+
+/* Headers */
+h1,
+h2,
+h3 {
+    color: #00ff41 !important;
+    text-shadow: 0 0 5px #00ff41;
+}
+
+/* Streamlit Inputs */
+.stTextInput>div>div>input {
+    background-color: #000000;
+    color: #00ff41;
+    border: 1px solid #00ff41;
+}
+
+.stTextArea>div>div>textarea {
+    background-color: #000000;
+    color: #00ff41;
+    border: 1px solid #00ff41;
+}
+
+.stSelectbox>div>div>div {
+    background-color: #000000;
+    color: #00ff41;
+}
+
+/* Buttons */
+.stButton>button {
+    background-color: #000000;
+    color: #00ff41;
+    border: 1px solid #00ff41;
+    transition: all 0.3s ease;
+}
+
+.stButton>button:hover {
+    background-color: #00ff41;
+    color: #000000;
+    box-shadow: 0 0 10px #00ff41;
+}
+
+/* Console Output */
+.console-box {
+    background-color: #1e1e1e;
+    /* Slightly lighter dark for contrast */
+    border: 1px solid #00ff41;
+    padding: 15px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 14px;
+    color: #d4d4d4;
+    /* Default text color */
+    white-space: pre-wrap;
+    max-height: 500px;
+    overflow-y: auto;
+    line-height: 1.5;
+}
+
+.log-thought {
+    color: #569cd6;
+    font-style: italic;
+}
+
+/* Blue for thoughts */
+.log-command {
+    color: #ce9178;
+    font-weight: bold;
+}
+
+/* Orange/Red for commands */
+.log-obs {
+    color: #c586c0;
+}
+
+/* Purple for Observation */
+.log-success {
+    color: #4ec9b0;
+}
+
+/* Teal/Green for success */
+.log-warning {
+    color: #dcdcaa;
+}
+
+/* Yellow for warnings */
+.log-error {
+    color: #f44747;
+}
+
+/* Red for errors */
+
+
+/* Success Message */
+.success-box {
+    border: 2px solid #00ff41;
+    padding: 20px;
+    text-align: center;
+    font-size: 24px;
+    color: #00ff41;
+    box-shadow: 0 0 20px #00ff41;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
