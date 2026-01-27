@@ -1,7 +1,7 @@
 # 🛡️ PwnGPT: Autonomous CTF Solver
 By Abdelali Saadali
 Abdelbarie Rhayour
-kawtar
+kawtar khallouf
 
 PwnGPT is an advanced, agentic AI assistant designed to autonomously solve Capture The Flag (CTF) challenges. Built with **Streamlit**, **LangGraph**, and **Google Gemini**, it features a secure **Docker-based sandbox** to execute tools and analyze binaries safely.
 
