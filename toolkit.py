@@ -39,11 +39,85 @@ class Guardian:
             if keyword in command_lower:
                 return "HIGH_RISK"
         
-        # 4. HIGH RISK: Running any executable in the sandbox
         if "./" in command or "python" in command or "sh " in command:
             return "HIGH_RISK"
 
         return "SAFE"
+
+
+class KnowledgeBase:
+    """
+    Simple RAG system for the Cyber Knowledge Base.
+    """
+    def __init__(self, knowledge_dir: str):
+        self.knowledge_dir = knowledge_dir
+        if not os.path.exists(self.knowledge_dir):
+            os.makedirs(self.knowledge_dir)
+
+    def search(self, query: str) -> str:
+        """
+        Simple keyword search over text files in knowledge dir.
+        In a real app, this would use embeddings (ChromaDB/FAISS).
+        """
+        results = []
+        if not os.path.exists(self.knowledge_dir):
+            return "Knowledge Base is empty or missing."
+
+        query_tokens = query.lower().split()
+        
+        for root, _, files in os.walk(self.knowledge_dir):
+            for file in files:
+                if file.endswith(".txt") or file.endswith(".md"):
+                    path = os.path.join(root, file)
+                    try:
+                        with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                            content = f.read()
+                            # Naive scoring: count token overlaps
+                            score = sum(1 for t in query_tokens if t in content.lower())
+                            if score > 0:
+                                snippet = content[:500].replace("\n", " ")
+                                results.append((score, f"[{file}]: {snippet}..."))
+                    except:
+                        continue
+        
+        results.sort(key=lambda x: x[0], reverse=True)
+        top_results = [r[1] for r in results[:3]]
+        
+        if not top_results:
+             return "No relevant knowledge found in Reference Library."
+             
+        return "\n\n".join(top_results)
+
+
+class WebEye:
+    """
+    Multimodal Web Browser tool using Playwright.
+    """
+    def __init__(self):
+        self.headless = True
+
+    def take_screenshot(self, url: str) -> str:
+        """
+        Takes a screenshot of the URL and returns the local path.
+        """
+        # Note: This runs on HOST. 
+        # Requirement: `pip install playwright && playwright install`
+        filename = f"screenshot_{os.urandom(4).hex()}.png"
+        path = os.path.join(os.getcwd(), "sandbox_workspace", filename)
+        
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=self.headless)
+                page = browser.new_page()
+                page.goto(url, timeout=15000)
+                page.screenshot(path=path)
+                browser.close()
+            return path
+        except ImportError:
+            return "Error: Playwright not installed. Run `pip install playwright && playwright install`."
+        except Exception as e:
+            return f"Screenshot failed: {e}"
 
 
 class CTFToolkit:
@@ -56,6 +130,10 @@ class CTFToolkit:
         self.sandbox_workspace_dir = "/workspace" # Inside Docker
         self.docker_image = "kalilinux/kali-rolling"
         self.container_name = "pwngpt-session"
+        
+        # Init Sub-Tools
+        self.rag = KnowledgeBase(knowledge_dir=os.path.join(os.getcwd(), "knowledge"))
+        self.web_eye = WebEye()
         
         # Ensure docker is available
         if not self._check_docker():

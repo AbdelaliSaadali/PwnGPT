@@ -148,11 +148,16 @@ def run_agent_step():
     brain = PwnGPTBrain(upload_dir=upload_dir_path)
     app = brain.graph
     
-    # Placeholder for the console
-    st.markdown("### 🧠 Neural Link (Thinking Console)")
-    console_placeholder = st.empty()
+    # Placeholder structure
+    tab_console, tab_artifacts = st.tabs(["🧠 Thinking Console", "📂 Artifact Gallery"])
+    
+    with tab_console:
+        console_placeholder = st.empty()
+    
+    with tab_artifacts:
+        artifacts_placeholder = st.empty()
 
-    # Function to render logs to placeholder
+    # Function to render logs
     def format_log(line: str) -> str:
         line_esc = line.replace("<", "&lt;").replace(">", "&gt;") # Basic HTML escaping
         
@@ -162,6 +167,8 @@ def run_agent_step():
             return f'<div class="log-command">> {line_esc}</div>'
         elif line.startswith("Observing challenge:"):
              return f'<div class="log-obs">{line_esc}</div>'
+        elif "Expert Panel" in line or "Expert Consensus" in line:
+             return f'<div class="log-expert">{line_esc}</div>'
         elif "SUCCESS:" in line or "✅" in line:
             return f'<div class="log-success">{line_esc}</div>'
         elif "⛔" in line or "⚠️" in line or "Error" in line:
@@ -174,12 +181,28 @@ def run_agent_step():
     def render_logs():
         formatted_lines = [format_log(log) for log in st.session_state.logs]
         console_html = "".join(formatted_lines)
-        # Scroll to bottom using flex direction or JS hack? 
-        # For now, just render the div.
         console_placeholder.markdown(f'<div class="console-box">{console_html}</div>', unsafe_allow_html=True)
+
+    def render_artifacts():
+        # A bit hacky to re-render buttons in loop, but Streamlit handles it okay mostly
+        # We will just list files here for speed, buttons might flicker or break in loop
+        # So we just listing names in loop, buttons appear when paused/stopped
+        sandbox_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
+        if os.path.exists(sandbox_path):
+            files = []
+            for root, dirs, filenames in os.walk(sandbox_path):
+                for f in filenames:
+                    files.append(os.path.relpath(os.path.join(root, f), sandbox_path))
+            
+            if files:
+                file_list = "\n".join([f"- {f}" for f in files])
+                artifacts_placeholder.markdown(f"**Current Files:**\n{file_list}")
+            else:
+                 artifacts_placeholder.info("No artifacts yet.")
 
     # Render initial state
     render_logs()
+    render_artifacts()
     
     try:
         # Resume from current state
@@ -200,6 +223,7 @@ def run_agent_step():
                     st.session_state.flag = state['flag_found']
                     st.session_state.running = False
                     render_logs()
+                    render_artifacts()
                     st.rerun() # Trigger success UI
                     return
                 
@@ -207,11 +231,13 @@ def run_agent_step():
                 if state.get('approval_status') == "REQUESTED":
                     st.session_state.waiting_for_approval = True
                     render_logs()
+                    render_artifacts()
                     st.rerun() # Trigger Approval UI
                     return 
 
                 # Live Update Console
                 render_logs()
+                render_artifacts()
                 
                 # Check if Agent decided to finish or errored out
                 # We inspect the messages or the last action
@@ -235,12 +261,67 @@ def run_agent_step():
 if st.session_state.running and not st.session_state.waiting_for_approval:
     run_agent_step()
 
-# --- Display Console (Static or Post-Loop) ---
-# If we are NOT running (waiting or finished), we still need to show the logs
+# --- Display Console & Artifacts ---
+# If we are NOT running (waiting or finished), we still need to show the logs/artifacts
 if not st.session_state.running or st.session_state.waiting_for_approval:
-    st.markdown("### 🧠 Neural Link (Thinking Console)")
-    console_text = "\n".join(st.session_state.logs)
-    st.markdown(f'<div class="console-box">{console_text}</div>', unsafe_allow_html=True)
+    
+    tab_console, tab_artifacts = st.tabs(["🧠 Thinking Console", "📂 Artifact Gallery"])
+    
+    with tab_console:
+        if st.session_state.logs:
+            # We recreate the log rendering here for static display
+            formatted_lines = []
+            for line in st.session_state.logs:
+                line_esc = line.replace("<", "&lt;").replace(">", "&gt;")
+                if line.startswith("Thought:"):
+                    formatted_lines.append(f'<div class="log-thought">{line_esc}</div>')
+                elif line.startswith("Ran command:") or line.startswith("Scraped URL:"):
+                    formatted_lines.append(f'<div class="log-command">> {line_esc}</div>')
+                elif line.startswith("Observing challenge:"):
+                     formatted_lines.append(f'<div class="log-obs">{line_esc}</div>')
+                elif "SUCCESS:" in line or "✅" in line:
+                    formatted_lines.append(f'<div class="log-success">{line_esc}</div>')
+                elif "⛔" in line or "⚠️" in line or "Error" in line:
+                    formatted_lines.append(f'<div class="log-error">{line_esc}</div>')
+                elif "✋" in line:
+                    formatted_lines.append(f'<div class="log-warning">{line_esc}</div>')
+                else:
+                    formatted_lines.append(f'<div>{line_esc}</div>')
+            console_html = "".join(formatted_lines)
+            st.markdown(f'<div class="console-box">{console_html}</div>', unsafe_allow_html=True)
+        else:
+             st.info("Agent not started yet.")
+
+    with tab_artifacts:
+        st.markdown("### 📦 Sandbox Artifacts")
+        sandbox_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
+        if os.path.exists(sandbox_path):
+            files = []
+            for root, dirs, filenames in os.walk(sandbox_path):
+                for f in filenames:
+                    files.append(os.path.relpath(os.path.join(root, f), sandbox_path))
+            
+            if files:
+                for f in files:
+                    col_file, col_dl = st.columns([4, 1])
+                    with col_file:
+                        st.code(f, language="text")
+                    with col_dl:
+                        file_full_path = os.path.join(sandbox_path, f)
+                        try:
+                            with open(file_full_path, "rb") as dl_file:
+                                st.download_button(
+                                    label="⬇️",
+                                    data=dl_file,
+                                    file_name=os.path.basename(f),
+                                    key=f"dl_{f}"
+                                )
+                        except Exception as e:
+                            st.error("Error reading file")
+            else:
+                st.info("No artifacts found in workspace.")
+        else:
+            st.warning("Sandbox workspace not initialized.")
 
 # Approval UI Overlay
 if st.session_state.waiting_for_approval:

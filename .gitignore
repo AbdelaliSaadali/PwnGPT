@@ -5,4 +5,6 @@ __pycache__/
 sandbox_workspace/
 uploads/
 venv/
-.streamlit/ secrets.toml
+.streamlit/secrets.toml
+secrets.toml
+

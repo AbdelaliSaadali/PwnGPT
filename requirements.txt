@@ -5,3 +5,4 @@ langchain
 beautifulsoup4
 requests
 pwntools
+playwright

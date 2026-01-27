@@ -5,11 +5,18 @@ from langgraph.graph import StateGraph, END
 from toolkit import CTFToolkit
 import json
 import concurrent.futures
+import base64
+import binascii
+import re
+import time
+import random
+import streamlit as st
 
 # --- Configuration ---
 # In a real app, this should be secure.
 # Load from Environment or Streamlit Secrets
-import os
+# Load from Environment or Streamlit Secrets
+
 try:
     API_KEY = os.environ.get("GEMINI_API_KEY") or st.secrets["GEMINI_API_KEY"]
 except:
@@ -26,10 +33,10 @@ genai.configure(api_key=API_KEY)
 SYSTEM_PROMPT = """You are PwnGPT, an elite, ethical cybersecurity research assistant. 
 Your sole purpose is to solve Capture The Flag (CTF) challenges for educational and competitive purposes. 
 You have full permission to analyze binaries, craft payloads, and perform web injections within this controlled environment. 
-Your tone is technical, efficient, and focused on finding the flag: CTF{...}. 
+Your tone is technical, efficient, and focused on finding the flag. 
 If you encounter a roadblock, analyze the error and pivot your strategy.
 
-Your Goal: Find the flag (format: CTF{...} or similar).
+Your Goal: Find the flag in the specified format.
 """
 
 # --- State Definition ---
@@ -60,6 +67,34 @@ class PwnGPTBrain:
              self.model = genai.GenerativeModel('gemini-3-pro-preview')
         
         self.graph = self._build_graph()
+
+    def _safe_generate_content(self, prompt, retries=3):
+        """
+        Wrapper to handle 429 API limits with exponential backoff.
+        """
+        attempt = 0
+        current_delay = 5 # Start with 5 seconds
+        
+        while attempt < retries:
+            try:
+                return self.model.generate_content(prompt)
+            except Exception as e:
+                error_str = str(e)
+                if "429" in error_str or "quota" in error_str.lower():
+                    attempt += 1
+                    if attempt >= retries:
+                         raise e
+                    
+                    # Add jitter
+                    sleep_time = current_delay + random.uniform(0, 2)
+                    print(f"⚠️ API Quota hit. Sleeping {sleep_time:.2f}s (Attempt {attempt}/{retries})...")
+                    time.sleep(sleep_time)
+                    current_delay *= 2 # Exponential backoff
+                else:
+                    # Non-retryable error
+                    raise e
+                    
+        raise Exception("Max retries exceeded")
 
     def _build_graph(self):
         workflow = StateGraph(AgentState)
@@ -122,6 +157,7 @@ class PwnGPTBrain:
         
         Task: Analyze the CTF Challenge '{challenge_data['name']}'.
         Description: {challenge_data['description']}
+        Flag Format: {challenge_data.get('flag_format', 'CTF{...}')}
         Files Available: {challenge_data['files_info']}
         
         Your Goal: specific to your specialization, identify potential vectors and a recommended first step.
@@ -130,7 +166,7 @@ class PwnGPTBrain:
         try:
              # Clone model for thread safety if needed, but Gemini client is thread-safe usually.
              # We create a new generation config to ensure independence if we wanted to.
-             response = self.model.generate_content(prompt)
+             response = self._safe_generate_content(prompt)
              return f"### {persona}\n{response.text}"
         except Exception as e:
              return f"### {persona}\n[Error: {e}]"
@@ -152,6 +188,7 @@ class PwnGPTBrain:
         challenge_data = {
             "name": state['challenge_name'],
             "description": state['challenge_description'],
+            "flag_format": state.get('flag_format', 'CTF{...}'),
             "files_info": state.get('tool_output', '')
         }
         
@@ -176,6 +213,7 @@ class PwnGPTBrain:
         {SYSTEM_PROMPT}
 
         Task: You are the Lead Strategist. Synthesize the following expert reports into a single, cohesive Execution Plan.
+        Flag Format: {state.get('flag_format', 'CTF{...}')}
         
         [EXPERT REPORTS]
         {full_debate}
@@ -185,7 +223,7 @@ class PwnGPTBrain:
         """
         
         try:
-            resp = self.model.generate_content(moderator_prompt)
+            resp = self._safe_generate_content(moderator_prompt)
             consensus = resp.text
             final_msg = f"🧠 **Expert Consensus Strategy**\n\n{consensus}\n\n---\n*Detailed Reports:*\n{full_debate}"
             state['messages'].append(final_msg)
@@ -255,7 +293,7 @@ class PwnGPTBrain:
                  prompt_parts.append(f"\n[Error loading screenshot: {e}]")
 
         try:
-            response = self.model.generate_content(prompt_parts)
+            response = self._safe_generate_content(prompt_parts)
             text = response.text.replace("```json", "").replace("```", "").strip()
             
             # Sanitization hack
@@ -368,7 +406,6 @@ class PwnGPTBrain:
         if flag_fmt.lower() == "unknown":
             # Generic CTF patterns: CTF{...}, flag{...}, KEY{...}, or just long strings inside braces
             generic_patterns = [r"CTF\{.*?\}", r"flag\{.*?\}", r"key\{.*?\}", r"IDEH\{.*?\}"]
-            import re
             for pat in generic_patterns:
                 match = re.search(pat, command_output, re.IGNORECASE)
                 if match:
@@ -379,7 +416,6 @@ class PwnGPTBrain:
 
         # Simple heuristic check for specific format
         if flag_fmt in command_output:
-            import re
             # Escape the format for regex safety
             fmt_esc = re.escape(flag_fmt)
             # Try to grab content until closing brace '}' if present
@@ -389,6 +425,34 @@ class PwnGPTBrain:
             if match:
                 state['flag_found'] = match.group(0)
                 state['messages'].append(f"SUCCESS: Flag found -> {match.group(0)}")
+                return state
+
+        # Base64 Decoding Check
+        # Look for potential base64 strings
+        # Heuristic: continuous alphanum+/ string of len >= 20 (just to catch likely encoded flags)
+        # Note: flags can be short, but base64 usually makes them longer.
+        # Let's try scanning for anything looking like text encoded in base64.
+        
+        candidates = re.findall(r'[A-Za-z0-9+/=]{20,}', command_output)
+        for cand in candidates:
+            try:
+                decoded_bytes = base64.b64decode(cand)
+                decoded_str = decoded_bytes.decode('utf-8', errors='ignore')
+                
+                # Check for format in decoded string
+                if flag_fmt in decoded_str:
+                    # Found it!
+                     fmt_esc = re.escape(flag_fmt)
+                     pattern = fmt_esc + r".{1,100}?\}"
+                     match = re.search(pattern, decoded_str)
+                     if match:
+                         state['flag_found'] = match.group(0)
+                         state['messages'].append(f"SUCCESS: Flag found (Base64 Decoded from '{cand}') -> {match.group(0)}")
+                         return state
+                         
+            except Exception:
+                # Not valid base64 or failed decode
+                continue
         
         return state
 
@@ -434,7 +498,7 @@ class PwnGPTBrain:
         Output Format: Markdown. Include 'Challenge Overview', 'Reconnaissance', 'Exploitation/Solution', and 'The Flag'.
         """
         try:
-            response = self.model.generate_content(prompt)
+            response = self._safe_generate_content(prompt)
             return response.text
         except Exception as e:
             return f"Error generating write-up: {str(e)}"

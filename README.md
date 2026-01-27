@@ -1,4 +1,7 @@
 # 🛡️ PwnGPT: Autonomous CTF Solver
+By Abdelali Saadali
+Abdelbarie Rhayour
+kawtar
 
 PwnGPT is an advanced, agentic AI assistant designed to autonomously solve Capture The Flag (CTF) challenges. Built with **Streamlit**, **LangGraph**, and **Google Gemini**, it features a secure **Docker-based sandbox** to execute tools and analyze binaries safely.
 
@@ -10,6 +13,11 @@ PwnGPT is an advanced, agentic AI assistant designed to autonomously solve Captu
 - **🧠 Thinking Console**: Visualizes the AI's thought process, commands, and observations in real-time with syntax highlighting.
 - **📦 Persistent Sessions**: Tools installed via `apt-get` persist throughout your session until you hit Reset.
 - **📝 Auto-Writeups**: Generates professional Markdown write-ups upon solving a challenge.
+- **📂 Intelligent "Artifact Gallery"**: A dedicated UI tab that lists generated payloads and files, allowing instant downloads.
+- **🧩 RAG-Powered "Cyber Knowledge Base"**: A reference library that the agent can search to access manuals, write-ups, and tool documentation when stuck.
+- **🌐 Multimodal "Web-Eye"**: A browser integration that takes screenshots of target websites, allowing Gemini's vision model to analyze UI elements for vulnerabilities.
+- **🧬 Multi-Agent Parallelism (Expert Panel)**: Spawns specialized sub-agents (Forensics, Web, Reverse Engineer) to debate strategies in parallel before the main agent acts.
+- **🔁 Flag Validation Loop**: Automatically detects and decodes suspicious strings (like Base64) in tool output to find hidden flags that don't match standard formats immediately.
 - **🛑 Human-in-the-Loop**: High-risk actions require your explicit approval via a "Big Red Button" UI.
 
 ## 🚀 Installation
