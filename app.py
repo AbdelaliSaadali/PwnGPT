@@ -67,6 +67,20 @@ with st.sidebar:
     
     uploaded_files = st.file_uploader("Upload Challenge Files/Screenshots", accept_multiple_files=True)
     
+    st.markdown("### 📚 Knowledge Base (RAG)")
+    kb_files = st.file_uploader("Upload Notes/Writeups", accept_multiple_files=True, type=["txt", "md"], key="kb_uploader")
+    
+    if kb_files:
+        kb_dir = "knowledge"
+        if not os.path.exists(kb_dir):
+            os.makedirs(kb_dir)
+        for kbf in kb_files:
+            kbf_path = os.path.join(kb_dir, kbf.name)
+            # Only save if not exists to avoid constant overwrites on rerun, or just overwrite is fine
+            with open(kbf_path, "wb") as f:
+                f.write(kbf.getbuffer())
+        st.success(f"Added {len(kb_files)} files to Knowledge Base.")
+    
     start_btn = st.button("🚀 INITIALIZE AGENT", type="primary")
     
     st.divider()
@@ -94,6 +108,8 @@ if "current_graph_state" not in st.session_state:
     st.session_state.current_graph_state = None
 if "waiting_for_approval" not in st.session_state:
     st.session_state.waiting_for_approval = False
+if "writeup" not in st.session_state:
+    st.session_state.writeup = None
 
 # --- Logic Flow ---
 if start_btn:
@@ -136,10 +152,92 @@ if start_btn:
             st.error(f"Initialization Failed: {str(e)}")
             st.session_state.running = False
 
+# --- Layout Setup ---
+# We create the tabs and placeholders consistently at the top level to avoid duplication
+tab_console, tab_artifacts = st.tabs(["🧠 Thinking Console", "📂 Artifact Gallery"])
+
+with tab_console:
+    console_placeholder = st.empty()
+
+with tab_artifacts:
+    artifacts_placeholder = st.empty()
+
+# --- Helper Functions for Rendering ---
+def format_log(line: str) -> str:
+    line_esc = line.replace("<", "&lt;").replace(">", "&gt;") # Basic HTML escaping
+    
+    if line.startswith("Thought:"):
+        return f'<div class="log-thought">{line_esc}</div>'
+    elif line.startswith("Ran command:") or line.startswith("Scraped URL:"):
+        return f'<div class="log-command">> {line_esc}</div>'
+    elif line.startswith("Observing challenge:"):
+            return f'<div class="log-obs">{line_esc}</div>'
+    elif "Expert Panel" in line or "Expert Consensus" in line:
+            return f'<div class="log-expert">{line_esc}</div>'
+    elif "SUCCESS:" in line or "✅" in line:
+        return f'<div class="log-success">{line_esc}</div>'
+    elif "⛔" in line or "⚠️" in line or "Error" in line:
+        return f'<div class="log-error">{line_esc}</div>'
+    elif "✋" in line:
+        return f'<div class="log-warning">{line_esc}</div>'
+    else:
+        return f'<div>{line_esc}</div>'
+
+def render_logs_to_placeholder(placeholder):
+    if st.session_state.logs:
+        formatted_lines = [format_log(log) for log in st.session_state.logs]
+        console_html = "".join(formatted_lines)
+        placeholder.markdown(f'<div class="console-box">{console_html}</div>', unsafe_allow_html=True)
+    else:
+        placeholder.info("Agent is identifying the best strategy...")
+
+def render_artifacts_to_placeholder(placeholder):
+    # Static list for speed in loop
+    sandbox_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
+    if os.path.exists(sandbox_path):
+        files = []
+        for root, dirs, filenames in os.walk(sandbox_path):
+            for f in filenames:
+                files.append(os.path.relpath(os.path.join(root, f), sandbox_path))
+        
+        if files:
+            # We construct a simple list if we are inside the high-frequency loop
+            # to avoid button rendering issues, but for now let's try rendering proper download buttons
+            # IF we are stable. But to be safe and avoid "duplicate key" errors in loop,
+            # let's just render the list string during thinking, and buttons when static.
+            
+            # Since we are reusing this function, let's just stick to the list format for consistency during run,
+            # and maybe buttons at the very end.
+            
+            # Actually, let's use a Hybrid approach:
+            # If running, show list. If stopped, show buttons.
+            if st.session_state.running and not st.session_state.waiting_for_approval:
+                 file_list = "\n".join([f"- {f}" for f in files])
+                 placeholder.markdown(f"**Current Files (Live):**\n{file_list}")
+            else:
+                 # Render buttons - WE MUST BE CAREFUL AS THIS IS INSIDE A PLACEHOLDER
+                 # Placeholders clear previous content.
+                 with placeholder.container():
+                     st.markdown("### 📦 Sandbox Artifacts")
+                     for f in files:
+                        c1, c2 = st.columns([4, 1])
+                        c1.code(f, language="text")
+                        file_full_path = os.path.join(sandbox_path, f)
+                        try:
+                            with open(file_full_path, "rb") as dl:
+                                c2.download_button("⬇️", dl, file_name=os.path.basename(f), key=f"dl_{f}_{os.urandom(2).hex()}")
+                        except:
+                            pass
+        else:
+             placeholder.info("No artifacts yet.")
+    else:
+        placeholder.warning("Sandbox workspace not initialized.")
+
+
 def run_agent_step():
     """
     Runs the agent loop until it finishes or hits an approval request.
-    Using placeholders to avoid full page reruns during streaming.
+    Updates the global placeholders.
     """
     if not st.session_state.current_graph_state:
         return
@@ -147,68 +245,14 @@ def run_agent_step():
     upload_dir_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
     brain = PwnGPTBrain(upload_dir=upload_dir_path)
     app = brain.graph
-    
-    # Placeholder structure
-    tab_console, tab_artifacts = st.tabs(["🧠 Thinking Console", "📂 Artifact Gallery"])
-    
-    with tab_console:
-        console_placeholder = st.empty()
-    
-    with tab_artifacts:
-        artifacts_placeholder = st.empty()
-
-    # Function to render logs
-    def format_log(line: str) -> str:
-        line_esc = line.replace("<", "&lt;").replace(">", "&gt;") # Basic HTML escaping
-        
-        if line.startswith("Thought:"):
-            return f'<div class="log-thought">{line_esc}</div>'
-        elif line.startswith("Ran command:") or line.startswith("Scraped URL:"):
-            return f'<div class="log-command">> {line_esc}</div>'
-        elif line.startswith("Observing challenge:"):
-             return f'<div class="log-obs">{line_esc}</div>'
-        elif "Expert Panel" in line or "Expert Consensus" in line:
-             return f'<div class="log-expert">{line_esc}</div>'
-        elif "SUCCESS:" in line or "✅" in line:
-            return f'<div class="log-success">{line_esc}</div>'
-        elif "⛔" in line or "⚠️" in line or "Error" in line:
-            return f'<div class="log-error">{line_esc}</div>'
-        elif "✋" in line:
-            return f'<div class="log-warning">{line_esc}</div>'
-        else:
-            return f'<div>{line_esc}</div>'
-
-    def render_logs():
-        formatted_lines = [format_log(log) for log in st.session_state.logs]
-        console_html = "".join(formatted_lines)
-        console_placeholder.markdown(f'<div class="console-box">{console_html}</div>', unsafe_allow_html=True)
-
-    def render_artifacts():
-        # A bit hacky to re-render buttons in loop, but Streamlit handles it okay mostly
-        # We will just list files here for speed, buttons might flicker or break in loop
-        # So we just listing names in loop, buttons appear when paused/stopped
-        sandbox_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
-        if os.path.exists(sandbox_path):
-            files = []
-            for root, dirs, filenames in os.walk(sandbox_path):
-                for f in filenames:
-                    files.append(os.path.relpath(os.path.join(root, f), sandbox_path))
-            
-            if files:
-                file_list = "\n".join([f"- {f}" for f in files])
-                artifacts_placeholder.markdown(f"**Current Files:**\n{file_list}")
-            else:
-                 artifacts_placeholder.info("No artifacts yet.")
 
     # Render initial state
-    render_logs()
-    render_artifacts()
+    render_logs_to_placeholder(console_placeholder)
+    render_artifacts_to_placeholder(artifacts_placeholder)
     
     try:
-        # Resume from current state
-        # Note: If we just approved an action, current_graph_state has 'approval_status': 'GRANTED'
-        # The brain logic will see this and pass through observe/reason to execute 'act'
-        
+        # Stream events
+        # Note: app.stream yields steps.
         for event in app.stream(st.session_state.current_graph_state):
             for node, state in event.items():
                 # Update global state
@@ -222,25 +266,24 @@ def run_agent_step():
                 if state.get('flag_found'):
                     st.session_state.flag = state['flag_found']
                     st.session_state.running = False
-                    render_logs()
-                    render_artifacts()
-                    st.rerun() # Trigger success UI
+                    render_logs_to_placeholder(console_placeholder)
+                    render_artifacts_to_placeholder(artifacts_placeholder)
+                    st.rerun() 
                     return
                 
                 # Check for Approval Request
                 if state.get('approval_status') == "REQUESTED":
                     st.session_state.waiting_for_approval = True
-                    render_logs()
-                    render_artifacts()
-                    st.rerun() # Trigger Approval UI
+                    render_logs_to_placeholder(console_placeholder)
+                    render_artifacts_to_placeholder(artifacts_placeholder)
+                    st.rerun() 
                     return 
 
                 # Live Update Console
-                render_logs()
-                render_artifacts()
+                render_logs_to_placeholder(console_placeholder)
+                render_artifacts_to_placeholder(artifacts_placeholder)
                 
-                # Check if Agent decided to finish or errored out
-                # We inspect the messages or the last action
+                # Check fin
                 current_action = state.get('current_action', {}).get('action')
                 if current_action == "finish":
                      st.session_state.running = False
@@ -251,77 +294,23 @@ def run_agent_step():
                      st.session_state.running = False
                      return
 
-                time.sleep(0.1) # Small cosmetic delay
+                time.sleep(0.1) 
                 
     except Exception as e:
         st.error(f"Agent Crashed: {str(e)}")
         st.session_state.running = False
 
-# Auto-run if running and not waiting
+# Auto-run if running
 if st.session_state.running and not st.session_state.waiting_for_approval:
     run_agent_step()
 
-# --- Display Console & Artifacts ---
-# If we are NOT running (waiting or finished), we still need to show the logs/artifacts
+# If NOT running (or waiting), ensure we display the latest state in the placeholders
+# Since we created placeholders at the top, they are empty if we didn't run run_agent_step 
+# in this pass. So we MUST render to them now.
 if not st.session_state.running or st.session_state.waiting_for_approval:
-    
-    tab_console, tab_artifacts = st.tabs(["🧠 Thinking Console", "📂 Artifact Gallery"])
-    
-    with tab_console:
-        if st.session_state.logs:
-            # We recreate the log rendering here for static display
-            formatted_lines = []
-            for line in st.session_state.logs:
-                line_esc = line.replace("<", "&lt;").replace(">", "&gt;")
-                if line.startswith("Thought:"):
-                    formatted_lines.append(f'<div class="log-thought">{line_esc}</div>')
-                elif line.startswith("Ran command:") or line.startswith("Scraped URL:"):
-                    formatted_lines.append(f'<div class="log-command">> {line_esc}</div>')
-                elif line.startswith("Observing challenge:"):
-                     formatted_lines.append(f'<div class="log-obs">{line_esc}</div>')
-                elif "SUCCESS:" in line or "✅" in line:
-                    formatted_lines.append(f'<div class="log-success">{line_esc}</div>')
-                elif "⛔" in line or "⚠️" in line or "Error" in line:
-                    formatted_lines.append(f'<div class="log-error">{line_esc}</div>')
-                elif "✋" in line:
-                    formatted_lines.append(f'<div class="log-warning">{line_esc}</div>')
-                else:
-                    formatted_lines.append(f'<div>{line_esc}</div>')
-            console_html = "".join(formatted_lines)
-            st.markdown(f'<div class="console-box">{console_html}</div>', unsafe_allow_html=True)
-        else:
-             st.info("Agent not started yet.")
+    render_logs_to_placeholder(console_placeholder)
+    render_artifacts_to_placeholder(artifacts_placeholder)
 
-    with tab_artifacts:
-        st.markdown("### 📦 Sandbox Artifacts")
-        sandbox_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
-        if os.path.exists(sandbox_path):
-            files = []
-            for root, dirs, filenames in os.walk(sandbox_path):
-                for f in filenames:
-                    files.append(os.path.relpath(os.path.join(root, f), sandbox_path))
-            
-            if files:
-                for f in files:
-                    col_file, col_dl = st.columns([4, 1])
-                    with col_file:
-                        st.code(f, language="text")
-                    with col_dl:
-                        file_full_path = os.path.join(sandbox_path, f)
-                        try:
-                            with open(file_full_path, "rb") as dl_file:
-                                st.download_button(
-                                    label="⬇️",
-                                    data=dl_file,
-                                    file_name=os.path.basename(f),
-                                    key=f"dl_{f}"
-                                )
-                        except Exception as e:
-                            st.error("Error reading file")
-            else:
-                st.info("No artifacts found in workspace.")
-        else:
-            st.warning("Sandbox workspace not initialized.")
 
 # Approval UI Overlay
 if st.session_state.waiting_for_approval:
@@ -355,17 +344,50 @@ if st.session_state.flag:
     col_confirm, col_reject = st.columns(2)
     
     with col_confirm:
-        if st.button("✅ Confirm & Generate Write-up", type="primary"):
-            with st.spinner("Generating Write-up..."):
-                # Get the brain instance again (or we could cache it if it wasn't stateless per step)
-                # We need the state
-                upload_dir_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
-                brain = PwnGPTBrain(upload_dir=upload_dir_path)
-                writeup = brain.generate_writeup(st.session_state.current_graph_state)
-                
-                st.markdown("## 📝 CTF Write-up")
-                st.markdown(writeup)
-                st.balloons()
+        # If writeup already exists, just show it. If button clicked, generate it.
+        if st.session_state.get("writeup") or st.button("✅ Confirm & Generate Write-up", type="primary"):
+            
+            if not st.session_state.get("writeup"):
+                with st.spinner("Generating Write-up..."):
+                    # Get the brain instance again
+                    upload_dir_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
+                    brain = PwnGPTBrain(upload_dir=upload_dir_path)
+                    st.session_state.writeup = brain.generate_writeup(st.session_state.current_graph_state)
+            
+            # Display Writeup
+            st.markdown("## 📝 CTF Write-up")
+            st.markdown(st.session_state.writeup)
+            
+            # Generate PDF
+            import utils_pdf
+            upload_dir_path = "/Users/mac/Desktop/PwnGPT/sandbox_workspace"
+            if not os.path.exists(upload_dir_path):
+                 os.makedirs(upload_dir_path)
+                 
+            pdf_path = os.path.join(upload_dir_path, "PwnGPT_Report.pdf")
+            logo_path = "PwnGPT.png"
+            
+            # We generate PDF every time to ensure it exists, or check existence
+            utils_pdf.generate_pdf_report(st.session_state.writeup, pdf_path, logo_path)
+            
+            st.balloons()
+            
+            # Download Buttons
+            dl_col1, dl_col2 = st.columns(2)
+            with dl_col1:
+                with open(pdf_path, "rb") as f:
+                    st.download_button(
+                        label="📄 Download Report (PDF)", 
+                        data=f, 
+                        file_name="PwnGPT_Report.pdf", 
+                        mime="application/pdf"
+                    )
+            with dl_col2:
+                st.download_button(
+                    label="📝 Download Report (TXT)", 
+                    data=st.session_state.writeup, 
+                    file_name="PwnGPT_Report.txt"
+                )
     
     with col_reject:
         if st.button("❌ Incorrect - Keep Searching"):

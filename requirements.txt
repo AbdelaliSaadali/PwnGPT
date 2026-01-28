@@ -6,3 +6,4 @@ beautifulsoup4
 requests
 pwntools
 playwright
+fpdf2

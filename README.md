@@ -12,12 +12,13 @@ PwnGPT is an advanced, agentic AI assistant designed to autonomously solve Captu
 - **🛡️ Guardian Protocol**: A security layer that blocks high-risk commands (e.g., `rm -rf`, accessing host files) before they execute.
 - **🧠 Thinking Console**: Visualizes the AI's thought process, commands, and observations in real-time with syntax highlighting.
 - **📦 Persistent Sessions**: Tools installed via `apt-get` persist throughout your session until you hit Reset.
-- **📝 Auto-Writeups**: Generates professional Markdown write-ups upon solving a challenge.
+- **📝 Professional Write-ups**: Generates detailed Markdown write-ups and exports them as **PDF (with branding)** or TXT.
 - **📂 Intelligent "Artifact Gallery"**: A dedicated UI tab that lists generated payloads and files, allowing instant downloads.
-- **🧩 RAG-Powered "Cyber Knowledge Base"**: A reference library that the agent can search to access manuals, write-ups, and tool documentation when stuck.
+- **📚 Knowledge Base Uploader**: Upload your own notes, write-ups, or cheat sheets (`.txt`, `.md`) directly via the Sidebar to feed the Agent's RAG memory.
 - **🌐 Multimodal "Web-Eye"**: A browser integration that takes screenshots of target websites, allowing Gemini's vision model to analyze UI elements for vulnerabilities.
 - **🧬 Multi-Agent Parallelism (Expert Panel)**: Spawns specialized sub-agents (Forensics, Web, Reverse Engineer) to debate strategies in parallel before the main agent acts.
 - **🔁 Flag Validation Loop**: Automatically detects and decodes suspicious strings (like Base64) in tool output to find hidden flags that don't match standard formats immediately.
+- **🛡️ Robust API Handling**: Implements smart rate-limiting and exponential backoff to handle free-tier API quotas (`429` errors) gracefully.
 - **🛑 Human-in-the-Loop**: High-risk actions require your explicit approval via a "Big Red Button" UI.
 
 ## 🚀 Installation
