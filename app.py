@@ -4,6 +4,13 @@ import time
 import shutil
 from brain import PwnGPTBrain
 
+# --- Theme Toggle ---
+if "theme" not in st.session_state:
+    st.session_state.theme = "dark"  # Default theme
+
+def toggle_theme():
+    st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+
 # --- Page Config ---
 st.set_page_config(
     page_title="PwnGPT - Autonomous CTF Solver",
@@ -13,10 +20,16 @@ st.set_page_config(
 )
 
 # --- Load Custom CSS ---
+# --- Load Custom CSS ---
 def load_css():
-    with open("css/style.css") as f:
-        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
-
+    theme = st.session_state.get("theme", "dark")
+    css_file = "css/style_dark.css" if theme == "dark" else "css/style_light.css"
+    
+    try:
+        with open(css_file) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.warning(f"CSS file '{css_file}' not found. Using default styles.")
 load_css()
 
 # --- Helper Functions ---
@@ -60,6 +73,16 @@ def reset_env():
 with st.sidebar:
     st.image("PwnGPT.png", width=300)
     st.title("PwnGPT Config")
+    
+    # Theme Toggle Button
+    theme_icon = "🌙" if st.session_state.theme == "dark" else "☀️"
+    theme_label = "Light Mode" if st.session_state.theme == "dark" else "Dark Mode"
+    
+    if st.button(f"{theme_icon} {theme_label}", key="theme_toggle"):
+        toggle_theme()
+        st.rerun()
+    
+    st.divider()
     
     challenge_name = st.text_input("Challenge Name", "Web Intrusion 101")
     category = st.selectbox("Category", ["WEB", "PWN", "REV", "DFIR", "OSINT", "MISC", "CRYPTO"])

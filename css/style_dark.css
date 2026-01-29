@@ -1,20 +1,15 @@
-/* Global Styles */
+/* Dark Theme */
 body {
     background-color: #0e1117;
     color: #a552be;
-    /* Cyber Green */
     font-family: 'Courier New', Courier, monospace;
 }
 
-/* Headers */
-h1,
-h2,
-h3 {
+h1, h2, h3 {
     color: #963a88 !important;
     text-shadow: 0 0 5px #90388a;
 }
 
-/* Streamlit Inputs */
 .stTextInput>div>div>input {
     background-color: #000000;
     color: hsl(304, 47%, 59%);
@@ -23,18 +18,18 @@ h3 {
 
 .stTextArea>div>div>textarea {
     background-color: #000000;
-    color:hsl(304, 47%, 59%);
-    border: 1px solid hsl(304, 47%, 59%);}
+    color: hsl(304, 47%, 59%);
+    border: 1px solid hsl(304, 47%, 59%);
+}
 
-    .stSelectbox>div>div>div {
+.stSelectbox>div>div>div {
     background-color: #000000;
     color: hsl(304, 47%, 59%);
 }
 
-/* Buttons */
 .stButton>button {
     background-color: #000000;
-    color:hsl(304, 47%, 59%);
+    color: hsl(304, 47%, 59%);
     border: 1px solid hsl(304, 47%, 59%);
     transition: all 0.3s ease;
 }
@@ -45,57 +40,26 @@ h3 {
     box-shadow: 0 0 10px hsl(304, 47%, 59%);
 }
 
-/* Console Output */
 .console-box {
     background-color: #1e1e1e;
-    /* Slightly lighter dark for contrast */
     border: 1px solid hsl(304, 47%, 59%);
     padding: 15px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 14px;
     color: #d4d4d4;
-    /* Default text color */
     white-space: pre-wrap;
     max-height: 500px;
     overflow-y: auto;
     line-height: 1.5;
 }
 
-.log-thought {
-    color: #569cd6;
-    font-style: italic;
-}
+.log-thought { color: #569cd6; font-style: italic; }
+.log-command { color: #ce9178; font-weight: bold; }
+.log-obs { color: #c586c0; }
+.log-success { color: #4ec9b0; }
+.log-warning { color: #dcdcaa; }
+.log-error { color: #f44747; }
 
-/* Blue for thoughts */
-.log-command {
-    color: #ce9178;
-    font-weight: bold;
-}
-
-/* Orange/Red for commands */
-.log-obs {
-    color: #c586c0;
-}
-
-/* Purple for Observation */
-.log-success {
-    color: #4ec9b0;
-}
-
-/* Teal/Green for success */
-.log-warning {
-    color: #dcdcaa;
-}
-
-/* Yellow for warnings */
-.log-error {
-    color: #f44747;
-}
-
-/* Red for errors */
-
-
-/* Success Message */
 .success-box {
     border: 2px solid #00ff41;
     padding: 20px;
@@ -107,15 +71,7 @@ h3 {
 }
 
 @keyframes blink {
-    0% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.5;
-    }
-
-    100% {
-        opacity: 1;
-    }
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
