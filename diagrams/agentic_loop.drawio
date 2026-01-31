@@ -1,0 +1,41 @@
+<mxfile host="Electron" modified="2025-07-04T00:00:00.000Z" agent="PythonDiagramGenerator" etag="UNIQUE_ETAG" version="21.0.0" type="device">
+    <diagram name="Page-1" id="UNIQUE_PAGE_ID">
+        <mxGraphModel dx="1434" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                
+        <mxCell id="687e6a50-4948-4139-9060-41b32737a7be" value="" style="shape=mxgraph.aws4.group;container=1;collapsible=0;recursiveResize=0;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#00FF41;fillColor=#0D1117;fontColor=#232F3E;rounded=1;shadow=1;strokeWidth=2;" vertex="1" parent="1">
+            <mxGeometry x="20" y="20" width="900" height="260" as="geometry" />
+        </mxCell>
+        <mxCell id="e218dd95-03b0-45b9-9086-71341ce5ba27" value="THE AGENTIC LOOP" style="fillColor=none;strokeColor=none;fontColor=#00FF41;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="320.0" y="70" width="300" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="cf76587a-8cc9-476c-91b8-7d4c33411d76" value="🔍 OBSERVE" style="fillColor=#1F2937;strokeColor=#00FF41;fontColor=#00FF41;rounded=1;shadow=1;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="70.0" y="160.0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="358f4b45-92d7-46c6-b96c-d9bb060de652" value="🧠 REASON" style="fillColor=#1F2937;strokeColor=#00FF41;fontColor=#00FF41;rounded=1;shadow=1;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="290.0" y="160.0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="0c561428-d768-419d-9745-d70aeb180eec" value="⚡ ACT" style="fillColor=#1F2937;strokeColor=#00FF41;fontColor=#00FF41;rounded=1;shadow=1;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="510.0" y="160.0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="7fddc9dd-7a8c-4788-90ae-4d6d9aa78ed5" value="✅ VERIFY" style="fillColor=#1F2937;strokeColor=#00FF41;fontColor=#00FF41;rounded=1;shadow=1;strokeWidth=2;fontSize=14;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="730.0" y="160.0" width="140" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="6b072002-8670-4aea-b0fd-da5a2f5157ea" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;fontColor=#000000;backgroundColor=#ffffff;strokeColor=#00FF41;strokeWidth=2;fontColor=#00FF41;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="cf76587a-8cc9-476c-91b8-7d4c33411d76" target="358f4b45-92d7-46c6-b96c-d9bb060de652">
+            <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="05407e57-f9e5-4da4-ab56-8ad7a5be4608" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;fontColor=#000000;backgroundColor=#ffffff;strokeColor=#00FF41;strokeWidth=2;fontColor=#00FF41;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="358f4b45-92d7-46c6-b96c-d9bb060de652" target="0c561428-d768-419d-9745-d70aeb180eec">
+            <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="529c47e6-9aa0-4d7a-83ae-5f4b38b3c79c" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;fontColor=#000000;backgroundColor=#ffffff;strokeColor=#00FF41;strokeWidth=2;fontColor=#00FF41;fontSize=11;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="0c561428-d768-419d-9745-d70aeb180eec" target="7fddc9dd-7a8c-4788-90ae-4d6d9aa78ed5">
+            <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d64d5ceb-7921-450a-bc00-150db7495647" value="LOOP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;fontColor=#000000;backgroundColor=#ffffff;strokeColor=#00FF41;strokeWidth=3;fontColor=#00FF41;fontSize=12;dashed=1;dashPattern=5 3;curved=1;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="7fddc9dd-7a8c-4788-90ae-4d6d9aa78ed5" target="cf76587a-8cc9-476c-91b8-7d4c33411d76">
+            <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

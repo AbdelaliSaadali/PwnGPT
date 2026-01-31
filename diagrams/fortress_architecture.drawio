@@ -1,0 +1,41 @@
+<mxfile host="Electron" modified="2025-07-04T00:00:00.000Z" agent="PythonDiagramGenerator" etag="UNIQUE_ETAG" version="21.0.0" type="device">
+    <diagram name="Page-1" id="UNIQUE_PAGE_ID">
+        <mxGraphModel dx="1434" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="0" />
+                <mxCell id="1" parent="0" />
+                
+        <mxCell id="5fb68e7f-1176-4adc-b1ab-c9d250cbb03a" value="" style="shape=mxgraph.aws4.group;container=1;collapsible=0;recursiveResize=0;verticalAlign=top;align=left;spacingLeft=30;grIcon=mxgraph.aws4.group_aws_cloud_alt;strokeColor=#00FF41;fillColor=#0D1117;fontColor=#232F3E;rounded=1;shadow=1;strokeWidth=2;" vertex="1" parent="1">
+            <mxGeometry x="20" y="20" width="520" height="635" as="geometry" />
+        </mxCell>
+        <mxCell id="4868cec6-bca2-487c-8160-a52b9528d585" value="THE FORTRESS ARCHITECTURE" style="fillColor=none;strokeColor=none;fontColor=#00FF41;fontSize=20;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="80.0" y="80" width="400" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="38410968-61bb-4523-a80b-345e597ba168" value="🧠 GEMINI 3 LLM" style="fillColor=#1a1f4c;strokeColor=#00FF41;fontColor=#FFFFFF;rounded=1;shadow=1;strokeWidth=2;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="105.0" y="160" width="350" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="a8d6f8d4-4ae2-4af8-b48f-d4826c18d584" value="Intelligence Layer" style="fillColor=none;strokeColor=none;fontColor=#888888;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+            <mxGeometry x="105.0" y="245" width="350" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7c82363b-28ce-4dbd-9669-ec6014fec30d" value="🛡️ GUARDIAN PROTOCOL" style="fillColor=#7f1d1d;strokeColor=#00FF41;fontColor=#FFFFFF;rounded=1;shadow=1;strokeWidth=3;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="80.0" y="315" width="400" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="7f36da54-e76a-41f9-be61-8b088728fedb" value="Security Firewall &amp; Filter" style="fillColor=none;strokeColor=none;fontColor=#888888;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+            <mxGeometry x="80.0" y="410" width="400" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="871d7ba1-2468-46af-b424-11b7b9f07670" value="🐳 DOCKER SANDBOX" style="fillColor=#1F2937;strokeColor=#00FF41;fontColor=#00FF41;rounded=1;shadow=1;strokeWidth=2;fontSize=16;fontStyle=1;" vertex="1" parent="1">
+            <mxGeometry x="105.0" y="480" width="350" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="acc8a4d4-ea15-4444-b257-842dcd94148c" value="Isolated Execution (Kali Linux)" style="fillColor=none;strokeColor=none;fontColor=#888888;fontSize=11;fontStyle=2;" vertex="1" parent="1">
+            <mxGeometry x="105.0" y="565" width="350" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="150675bd-a92a-468b-bee3-04f3dc0e074d" value="Commands" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;fontColor=#000000;backgroundColor=#ffffff;strokeColor=#00FF41;strokeWidth=2;fontColor=#00FF41;fontSize=10;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="38410968-61bb-4523-a80b-345e597ba168" target="7c82363b-28ce-4dbd-9669-ec6014fec30d">
+            <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="18a6d40e-41bf-4d16-8160-d9bc23d78ba6" value="Safe Cmds" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#000000;fontColor=#000000;backgroundColor=#ffffff;strokeColor=#00FF41;strokeWidth=2;fontColor=#00FF41;fontSize=10;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="7c82363b-28ce-4dbd-9669-ec6014fec30d" target="871d7ba1-2468-46af-b424-11b7b9f07670">
+            <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
