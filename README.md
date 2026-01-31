@@ -21,6 +21,18 @@ PwnGPT is an advanced, agentic AI assistant designed to autonomously solve Captu
 - **🛡️ Robust API Handling**: Implements smart rate-limiting and exponential backoff to handle free-tier API quotas (`429` errors) gracefully.
 - **🛑 Human-in-the-Loop**: High-risk actions require your explicit approval via a "Big Red Button" UI.
 
+## 🏗️ Architecture
+
+### The Agentic Loop
+PwnGPT uses a ReAct-style reasoning cycle to autonomously solve challenges:
+
+![The Agentic Loop](diagrams/agentic_loop.png)
+
+### The Fortress Architecture
+A layered security model ensures safe execution:
+
+![The Fortress Architecture](diagrams/fortress_architecture.png)
+
 ## 🚀 Installation
 
 ### Prerequisites
