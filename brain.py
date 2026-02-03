@@ -12,22 +12,111 @@ import time
 import random
 import streamlit as st
 
-# --- Configuration ---
-# In a real app, this should be secure.
-# Load from Environment or Streamlit Secrets
-# Load from Environment or Streamlit Secrets
+DEMO_MODE = True
 
-try:
-    API_KEY = os.environ.get("GEMINI_API_KEY") or st.secrets["GEMINI_API_KEY"]
-except:
-    API_KEY = "YOUR_API_KEY_HERE" # Placeholder
+MOCK_EXPERT_REPORT = """🧠 **Expert Consensus Strategy**
+🎯 PwnGPT Strategic Synthesis Report
 
-if API_KEY == "YOUR_API_KEY_HERE":
-    # Fallback for local testing if not set
-    # Do NOT commit your actual key here!
-    pass 
+To: CTF Operations Command
+From: Lead Strategist
+Subject: Execution Plan for `chall` (ELF 64-bit)
+Classification: Warm-up / Easy RE
 
-genai.configure(api_key=API_KEY)
+---
+
+### 📝 Executive Summary
+Analysis of the expert reports indicates a high probability that the challenge is a standard "entry-level" reverse engineering task. The "Warm up" and "Easy rev" designations suggest that the flag is likely stored in a human-readable format or protected by trivial obfuscation. All divisions (RE, Forensics, Web) converge on static analysis as the primary entry point.
+
+### 🛠️ Joint Strategy: "Operation Static Sweep"
+The strategy follows a tiered escalation path designed for maximum efficiency:
+
+1.  **Tier 1: Static Reconnaissance (Immediate)**: Treat the binary as a black box. Extract all printable sequences to identify the flag format `IDEH{` directly.
+2.  **Tier 2: Dynamic Trace (Escalation A)**: If strings are obfuscated, use library call interception (`ltrace`) to monitor `strcmp`, `strncmp`, or `memcmp`. This reveals the "correct" string as it is compared against user input in memory.
+3.  **Tier 3: Logic Decomposition (Escalation B)**: If the comparison is manual (loop-based) or involves simple XOR/bit-shifting, utilize a decompiler (Ghidra/IDA) to reconstruct the main function and reverse the algorithm.
+
+### 🚀 The Single Most Likely Path
+Given the "Warm up" label, the flag is likely a hardcoded string residing in the `.rodata` section. If it is not in plaintext, it is likely XORed with a single-byte key or stored as a series of hex bytes that are reconstructed at runtime.
+
+### ⚡ Immediate Next Step
+Execute the following command to attempt an immediate capture:
+
+```bash
+strings chall | grep "IDEH{" || strings -e l chall | grep "IDEH{"
+```
+
+**Reasoning**: This command covers both standard ASCII and potential 16-bit wide-character (Unicode) strings. If this yields no result, we will immediately pivot to Tier 2 dynamic tracing:
+
+```bash
+ltrace ./chall <<< "DUMMY_INPUT"
+```
+
+**Status**: Awaiting execution results. Standing by to analyze disassembly if Tier 1 and 2 fail.
+
+---
+
+### Detailed Reports:
+
+#### ⚙️ Reverse Engineer (Focus: Binary Analysis, Disassembly, Logic Flows)
+**Target Analysis**: `chall` (ELF 64-bit)
+
+**Potential Vectors**
+*   **Hardcoded Strings**: Given the "Warm up" designation, the flag or a cleartext key may be stored in the `.rodata` section.
+*   **Static Comparison**: The binary likely takes user input and compares it against a transformed or static string using `strcmp` or a manual byte-by-byte loop.
+*   **Basic Logic/XOR**: The flag might be obfuscated via a simple XOR operation or a basic Caesar cipher/rotation.
+*   **Symbolic Execution**: If the logic involves multiple constraints, tools like `angr` can solve for the input reaching the "correct" branch.
+
+**Recommended First Steps**
+1.  **String Extraction**: Execute `strings -n 5 chall | grep "IDEH"` to check for a plaintext flag.
+2.  **Library Call Tracing**: Run `ltrace ./chall` and provide a dummy input. This will reveal if the input is being compared directly to a target string via `strcmp` or `strncmp`.
+3.  **Disassembly (Entry Point)**: Open the binary in `objdump` or a decompiler (Ghidra/IDA). Locate the main function and identify:
+    *   The input buffer location.
+    *   The transformation loop (look for `xor`, `add`, or `sub` instructions).
+    *   The conditional jump (`jz`/`jnz`) that determines the success message.
+
+
+#### 🕵️ Forensics Investigator (Focus: Metadata, File Formats, Steganography)
+**🕵️ Forensics Report**: `chall`
+
+**Potential Vectors**:
+*   **Embedded Plaintext**: Given the "Easy rev" and "Warm up" labels, the flag may reside in the `.rodata` or `.data` sections in plaintext or simple encoding (Base64, ROT13).
+*   **ELF Metadata**: Potential for flag fragments within the `.comment` section, symbol names, or custom section headers.
+*   **File Overlay**: Possible data appended to the end of the ELF executable (trailing bytes after the last segment).
+
+**Recommended First Step**:
+Execute a comprehensive string extraction to search for the `IDEH{` prefix and look for suspicious sequences.
+
+```bash
+# Extract strings with a minimum length of 4
+strings chall | grep "IDEH{"
+
+# If no direct match, look for the flag format or suspicious entries
+strings chall | tail -n 50
+```
+
+**Alternative**: Use `binwalk -E chall` to check for high-entropy regions that might indicate compressed or encrypted data hidden within the binary structure.
+
+
+#### 🕸️ Web Exploitation Specialist (Focus: Source Code, HTTP Headers, Injection)
+As a Web Exploitation Specialist, even when presented with a binary (ELF), my focus is on **Source Code Analysis (Decompilation)** and **Injection Vectors**.
+
+Given the "Easy rev" description and the binary format, here are the potential vectors and the recommended first step from my perspective:
+
+**🕸️ Potential Vectors**
+*   **Information Disclosure (Hardcoded Secrets)**: Similar to finding credentials in client-side JS, the flag or a sensitive key may be hardcoded as a static string within the binary's data segments.
+*   **Command/Argument Injection**: If the binary takes user input and passes it to a system shell or a formatted string function (like `printf` or `system`), it may be vulnerable to injection.
+*   **Insecure Logic Flow**: Analyzing the "source" (via decompilation) to find bypasses in the validation logic (e.g., a simple if statement comparing input to a hardcoded value).
+
+**🚀 Recommended First Step**
+**Static String & Symbol Analysis.**
+Since the flag format is `IDEH{`, the most efficient first step is to treat the binary like a minified source file and grep for the known pattern.
+
+**Command:**
+```bash
+strings chall | grep "IDEH{"
+```
+
+If no direct flag appears, I will proceed to decompile the main function to analyze how it handles input, looking for comparison logic that mimics a login form or API endpoint."""
+
 
 # --- System Prompt ---
 SYSTEM_PROMPT = """You are PwnGPT, an elite, ethical cybersecurity research assistant. 
@@ -59,6 +148,27 @@ class AgentState(TypedDict):
 class PwnGPTBrain:
     def __init__(self, upload_dir: str):
         self.toolkit = CTFToolkit(workspace_dir=upload_dir)
+        
+        # --- Configure API Key (Load dynamically to allow hot-reload) ---
+        try:
+            # Try environment first, then secrets, then fallback
+            api_key = os.environ.get("GEMINI_API_KEY") 
+            if not api_key:
+                try:
+                    api_key = st.secrets["GEMINI_API_KEY"]
+                except (FileNotFoundError, KeyError):
+                    pass
+            
+            if not api_key or api_key == "YOUR_API_KEY_HERE":
+                st.error("⚠️ GENAI_API_KEY is missing! Please set it in .streamlit/secrets.toml")
+                # Fallback to avoid immediate crash, but calls will fail
+                api_key = "MISSING_KEY"
+            
+            genai.configure(api_key=api_key)
+            
+        except Exception as e:
+            st.error(f"Failed to configure Gemini API: {e}")
+
         try:
              # Try specific version found in list_models
              self.model = genai.GenerativeModel('gemini-3-flash-preview')
@@ -198,6 +308,17 @@ class PwnGPTBrain:
             "⚙️ Reverse Engineer (Focus: Binary Analysis, Disassembly, Logic Flows)"
         ]
         
+        if DEMO_MODE:
+             # Mock the expert feedback
+             state['messages'].append(MOCK_EXPERT_REPORT)
+             # Mock the expert outputs data structure
+             state['expert_outputs'] = {
+                 "🕵️ Forensics Investigator": "Mock Forensics",
+                 "🕸️ Web Exploitation Specialist": "Mock Web",
+                 "⚙️ Reverse Engineer": "Mock RE"
+             }
+             return state
+
         # 1. Parallel Execution
         expert_results = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
