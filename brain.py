@@ -17,17 +17,7 @@ import streamlit as st
 # Load from Environment or Streamlit Secrets
 # Load from Environment or Streamlit Secrets
 
-try:
-    API_KEY = os.environ.get("GEMINI_API_KEY") or st.secrets["GEMINI_API_KEY"]
-except:
-    API_KEY = "YOUR_API_KEY_HERE" # Placeholder
-
-if API_KEY == "YOUR_API_KEY_HERE":
-    # Fallback for local testing if not set
-    # Do NOT commit your actual key here!
-    pass 
-
-genai.configure(api_key=API_KEY)
+# API Configuration moved to PwnGPTBrain class for dynamic loading
 
 # --- System Prompt ---
 SYSTEM_PROMPT = """You are PwnGPT, an elite, ethical cybersecurity research assistant. 
@@ -59,6 +49,27 @@ class AgentState(TypedDict):
 class PwnGPTBrain:
     def __init__(self, upload_dir: str):
         self.toolkit = CTFToolkit(workspace_dir=upload_dir)
+        
+        # --- Configure API Key (Load dynamically to allow hot-reload) ---
+        try:
+            # Try environment first, then secrets, then fallback
+            api_key = os.environ.get("GEMINI_API_KEY") 
+            if not api_key:
+                try:
+                    api_key = st.secrets["GEMINI_API_KEY"]
+                except (FileNotFoundError, KeyError):
+                    pass
+            
+            if not api_key or api_key == "YOUR_API_KEY_HERE":
+                st.error("⚠️ GENAI_API_KEY is missing! Please set it in .streamlit/secrets.toml")
+                # Fallback to avoid immediate crash, but calls will fail
+                api_key = "MISSING_KEY"
+            
+            genai.configure(api_key=api_key)
+            
+        except Exception as e:
+            st.error(f"Failed to configure Gemini API: {e}")
+
         try:
              # Try specific version found in list_models
              self.model = genai.GenerativeModel('gemini-3-flash-preview')
